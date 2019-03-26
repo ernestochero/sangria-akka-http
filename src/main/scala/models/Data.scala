@@ -1,10 +1,14 @@
 package models
+import java.util.concurrent.TimeUnit
+
+import akka.util.Timeout
 import repository._
 import mongodb._
 import org.bson.types.ObjectId
 import org.mongodb.scala.MongoCollection
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, ExecutionContext}
 import scala.util.{Failure, Success}
 object Episode extends Enumeration {
   val NEWHOPE, EMPIRE, JEDI = Value
@@ -128,13 +132,12 @@ class ProductRepo(repository: ProductRepository)(implicit ec:ExecutionContext) {
     products
   }
 
-  def results = repository.getAllProducts
-
+  def results = Await.result(repository.getAllProducts.map(_.map(_.asResource)), Duration(10, TimeUnit.SECONDS))
 
   private val Products = List(
     Product("5c798c2137024ab47a2b9617", "Cheesecake", "Tasty"),
     Product("5c798c2137024ab47a2b9618", "Health Potion", "+50 HP")
-    )
+    ) ++ results
 
   def product(id: String): Option[Product] =
     Products find (_.id == id)

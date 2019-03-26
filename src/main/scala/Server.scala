@@ -32,13 +32,6 @@ object Server extends App with CorsSupport {
   val repository = new ProductRepository(Mongo.productsCollection)
 
   def executeGraphQL(query: Document, operationName: Option[String], variables: Json, tracing: Boolean) = {
-    /* just to test purpose*/
-    val pr = new ProductRepo(repository)
-    pr.results.onComplete{
-      case Success(value) => println(value)
-      case Failure(exception) => println(s"an error ${exception.getMessage}")
-    }
-
     complete(Executor.execute(SchemaDefinition3.ProductSchema, query, new ProductRepo(repository),
       variables = if (variables.isNull) Json.obj() else variables,
       operationName = operationName,
