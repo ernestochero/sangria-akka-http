@@ -5,9 +5,9 @@ import models._
 import org.bson.types.ObjectId
 
 import scala.concurrent.{ExecutionContext, Future}
-class ProductRepository(collection: MongoCollection[Product])(implicit ec:ExecutionContext)  {
+class ProductRepository(collection: MongoCollection[ProductDomain])(implicit ec:ExecutionContext)  {
 
-  def findById(id: String): Future[Option[Product]] = {
+  def findById(id: String): Future[Option[ProductDomain]] = {
     collection
       .find(Document("_id" -> new ObjectId(id)))
       .first()
@@ -15,14 +15,15 @@ class ProductRepository(collection: MongoCollection[Product])(implicit ec:Execut
       .map(Option(_))
   }
 
-  def save(product: Product): Future[String] = {
+  def save(product: ProductDomain): Future[String] = {
     collection
       .insertOne(product)
       .head()
-      .map { _ => product.id }
+      .map { _ => product._id.toHexString }
   }
 
-  def getAllProducts: Future[List[Product]] = {
+  def getAllProducts: Future[List[ProductDomain]] = {
+    println(collection.namespace)
     collection.find().toFuture().map(_.toList)
   }
 

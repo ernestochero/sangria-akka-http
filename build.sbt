@@ -21,6 +21,7 @@ libraryDependencies ++= Seq(
 
   "org.scalatest" %% "scalatest" % "3.0.5" % Test,
   "org.mongodb.scala" %% "mongo-scala-driver" % "2.1.0",
+  "net.debasishg" %% "redisclient" % "3.9",
 )
 
 Revolver.settings

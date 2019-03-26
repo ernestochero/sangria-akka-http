@@ -31,17 +31,25 @@ object Server extends App with CorsSupport {
 
   val repository = new ProductRepository(Mongo.productsCollection)
 
-  def executeGraphQL(query: Document, operationName: Option[String], variables: Json, tracing: Boolean) =
+  def executeGraphQL(query: Document, operationName: Option[String], variables: Json, tracing: Boolean) = {
+    /* just to test purpose*/
+    val pr = new ProductRepo(repository)
+    pr.results.onComplete{
+      case Success(value) => println(value)
+      case Failure(exception) => println(s"an error ${exception.getMessage}")
+    }
+
     complete(Executor.execute(SchemaDefinition3.ProductSchema, query, new ProductRepo(repository),
       variables = if (variables.isNull) Json.obj() else variables,
       operationName = operationName,
       middleware = if (tracing) SlowLog.apolloTracing :: Nil else Nil,
       deferredResolver = DeferredResolver.fetchers(SchemaDefinition3.products))
-        .map(OK → _)
-        .recover {
-          case error: QueryAnalysisError ⇒ BadRequest → error.resolveError
-          case error: ErrorWithResolver ⇒ InternalServerError → error.resolveError
-        })
+      .map(OK → _)
+      .recover {
+        case error: QueryAnalysisError ⇒ BadRequest → error.resolveError
+        case error: ErrorWithResolver ⇒ InternalServerError → error.resolveError
+      })
+  }
 
   def formatError(error: Throwable): Json = error match {
     case syntaxError: SyntaxError ⇒

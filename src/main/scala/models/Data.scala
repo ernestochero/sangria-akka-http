@@ -1,6 +1,7 @@
 package models
 import repository._
 import mongodb._
+import org.bson.types.ObjectId
 import org.mongodb.scala.MongoCollection
 
 import scala.concurrent.ExecutionContext
@@ -39,9 +40,9 @@ class CharacterRepo {
   def getHuman(id: String): Option[Human] = humans.find(c ⇒ c.id == id)
 
   def getDroid(id: String): Option[Droid] = droids.find(c ⇒ c.id == id)
-  
+
   def getHumans(limit: Int, offset: Int): List[Human] = humans.drop(offset).take(limit)
-  
+
   def getDroids(limit: Int, offset: Int): List[Droid] = droids.drop(offset).take(limit)
 }
 
@@ -101,18 +102,34 @@ trait Identifiable {
 }
 case class Picture( width: Int,  height: Int, url: Option[String])
 
+
+case class ProductDomain(_id: ObjectId, name: String, description: String) {
+  def asResource = Product(_id.toHexString, name, description)
+}
+
 case class Product(id: String, name: String, description: String) extends Identifiable {
   def picture(size: Int): Picture = {
     Picture(width = size, height = size, url = Some(s"//cdn.com/$size/$id.jpg"))
   }
+
+  def asDomain = ProductDomain(if (id == null) ObjectId.get() else new ObjectId(id), name , description)
+
+}
+
+
+class StorageRedisCache {
+
 }
 
 class ProductRepo(repository: ProductRepository)(implicit ec:ExecutionContext) {
 
- /* private val Products = for {
-    products <- repository.getAllProducts
-  } yield products
-  */
+  def  storeProductsOnCache(products:List[Product]) = {
+    products.foreach(println(_))
+    products
+  }
+
+  def results = repository.getAllProducts
+
 
   private val Products = List(
     Product("5c798c2137024ab47a2b9617", "Cheesecake", "Tasty"),
