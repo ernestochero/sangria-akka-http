@@ -148,7 +148,7 @@ object SchemaDefinition3 {
     fields[Unit, Identifiable](
       Field("id", StringType, resolve = _.value.id)))
 
-  val ProductType = deriveObjectType[Unit, Product](
+  implicit val ProductType = deriveObjectType[Unit, Product](
     Interfaces(IdentifiableType),
     IncludeMethods("picture"))
 
@@ -162,6 +162,7 @@ object SchemaDefinition3 {
 
     Field("products", ListType(ProductType),
       description = Some("Returns a list of all available products."),
+      arguments = Argument("ids", ListInputType(IntType)) :: Nil,
       resolve = _.ctx.products))
   )
 

@@ -134,6 +134,8 @@ class ProductRepo(repository: ProductRepository)(implicit ec:ExecutionContext) {
 
   def results = Await.result(repository.getAllProducts.map(_.map(_.asResource)), Duration(10, TimeUnit.SECONDS))
 
+  def getProducts = repository.getAllProducts
+
   private val Products = List(
     Product("5c798c2137024ab47a2b9617", "Cheesecake", "Tasty"),
     Product("5c798c2137024ab47a2b9618", "Health Potion", "+50 HP")
