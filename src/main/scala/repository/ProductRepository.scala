@@ -22,6 +22,6 @@ class ProductRepository(collection: MongoCollection[ProductDomain])(implicit ec:
       .map { _ => product._id.toHexString }
   }
 
-  def getAllProducts: Future[List[ProductDomain]] = { collection.find().toFuture() }
+  def getAllProducts: Future[Seq[ProductDomain]] = { collection.find().toFuture() }
 
 }

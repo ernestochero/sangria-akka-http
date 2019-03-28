@@ -8,7 +8,7 @@ import org.bson.types.ObjectId
 import org.mongodb.scala.MongoCollection
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Success}
 object Episode extends Enumeration {
   val NEWHOPE, EMPIRE, JEDI = Value
@@ -108,6 +108,7 @@ case class Picture( width: Int,  height: Int, url: Option[String])
 
 
 case class ProductDomain(_id: ObjectId, name: String, description: String) {
+  def picture(size: Int): Picture = asResource.picture(size)
   def asResource = Product(_id.toHexString, name, description)
 }
 
@@ -115,34 +116,18 @@ case class Product(id: String, name: String, description: String) extends Identi
   def picture(size: Int): Picture = {
     Picture(width = size, height = size, url = Some(s"//cdn.com/$size/$id.jpg"))
   }
-
   def asDomain = ProductDomain(if (id == null) ObjectId.get() else new ObjectId(id), name , description)
-
-}
-
-
-class StorageRedisCache {
-
 }
 
 class ProductRepo(repository: ProductRepository)(implicit ec:ExecutionContext) {
 
-  def  storeProductsOnCache(products:List[Product]) = {
-    products.foreach(println(_))
-    products
-  }
+  /*def results = Await.result(repository.getAllProducts.map(_.map(_.asResource)), Duration(10, TimeUnit.SECONDS))*/
 
-  def results = Await.result(repository.getAllProducts.map(_.map(_.asResource)), Duration(10, TimeUnit.SECONDS))
+  def allProducts: Future[Seq[Product]] = repository.getAllProducts.map(c => c.map(_.asResource))
 
-  def getProducts = repository.getAllProducts
+  def product(id: String): Future[Option[Product]] = repository.findById(id).map(_.map(_.asResource))
 
-  private val Products = List(
-    Product("5c798c2137024ab47a2b9617", "Cheesecake", "Tasty"),
-    Product("5c798c2137024ab47a2b9618", "Health Potion", "+50 HP")
-    ) ++ results
+  // TODO : implement correctly from productRepository
+  def products(ids: Seq[String]): Future[Seq[Product]] = repository.getAllProducts.map(c => c.map(_.asResource).filter(p => ids.contains(p.id)))
 
-  def product(id: String): Option[Product] =
-    Products find (_.id == id)
-
-  def products: List[Product] = Products
 }

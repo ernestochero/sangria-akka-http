@@ -1,9 +1,14 @@
+import java.util.concurrent.TimeUnit
+
 import models._
 import sangria.execution.deferred.{Fetcher, HasId}
 import sangria.macros.derive.{IncludeMethods, Interfaces, deriveObjectType}
 import sangria.schema._
 
-import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
+import scala.util.{Failure, Success}
 
 /**
  * Defines a GraphQL schema for the current project
@@ -133,7 +138,7 @@ object SchemaDefinition3 {
        ObjectTypeDescription("The product picture"),
        DocumentField("url", "Picture CDN URL"))*/
   val products = Fetcher.caching(
-    (ctx: ProductRepo, ids: Seq[String]) => Future.successful(ids.flatMap(id => ctx.product(id))))(HasId(_.id))
+    (ctx: ProductRepo, ids: Seq[String]) => { ctx.products(ids)})(HasId(c=> c.id))
 
   implicit val PictureType = ObjectType("Picture", "The product picture",
     fields[Unit, Picture](
@@ -153,8 +158,13 @@ object SchemaDefinition3 {
     IncludeMethods("picture"))
 
   val Id = Argument("id", StringType)
+  val Ids = Argument("ids", ListInputType(StringType))
 
   val QueryType = ObjectType("Query", fields[ProductRepo, Unit](
+    Field("allProducts", ListType(ProductType),
+      description = Some("Returns a list of all available products."),
+      resolve = _.ctx.allProducts),
+
     Field("product", OptionType(ProductType),
       description = Some("Returns a product with specific `id`."),
       arguments = Id :: Nil,
@@ -162,8 +172,9 @@ object SchemaDefinition3 {
 
     Field("products", ListType(ProductType),
       description = Some("Returns a list of all available products."),
-      arguments = Argument("ids", ListInputType(IntType)) :: Nil,
-      resolve = _.ctx.products))
+      arguments = Ids :: Nil,
+      resolve = c => c.ctx.products(c.arg[List[String]]("ids")))
+   )
   )
 
   val ProductSchema = Schema(QueryType)
