@@ -130,4 +130,9 @@ class ProductRepo(repository: ProductRepository)(implicit ec:ExecutionContext) {
   // TODO : implement correctly from productRepository
   def products(ids: Seq[String]): Future[Seq[Product]] = repository.getAllProducts.map(c => c.map(_.asResource).filter(p => ids.contains(p.id)))
 
+  // TODO : on case class Product -> id could be Some(id)
+  def saveProduct(name:String, description:String) = {
+    val product = ProductDomain(ObjectId.get(), name, description)
+    repository.save(product).map(_.asResource)
+  }
 }

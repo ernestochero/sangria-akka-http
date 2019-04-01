@@ -15,11 +15,11 @@ class ProductRepository(collection: MongoCollection[ProductDomain])(implicit ec:
       .map(Option(_))
   }
 
-  def save(product: ProductDomain): Future[String] = {
+  def save(product: ProductDomain) = {
     collection
       .insertOne(product)
       .head()
-      .map { _ => product._id.toHexString }
+      .map { _ => product }
   }
 
   def getAllProducts: Future[Seq[ProductDomain]] = { collection.find().toFuture() }

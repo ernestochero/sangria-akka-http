@@ -158,6 +158,8 @@ object SchemaDefinition3 {
     IncludeMethods("picture"))
 
   val Id = Argument("id", StringType)
+  val NameArg = Argument("name", StringType)
+  val DescriptionArg = Argument("description", StringType)
   val Ids = Argument("ids", ListInputType(StringType))
 
   val QueryType = ObjectType("Query", fields[ProductRepo, Unit](
@@ -177,5 +179,12 @@ object SchemaDefinition3 {
    )
   )
 
-  val ProductSchema = Schema(QueryType)
+  val MutationType = ObjectType("Mutation", fields[ProductRepo, Unit](
+    Field("addProduct", ProductType,
+      arguments = NameArg :: DescriptionArg :: Nil,
+      resolve = c => c.ctx.saveProduct(c.arg(NameArg), c.arg(DescriptionArg))
+    )
+  ))
+
+  val ProductSchema = Schema(QueryType, Some(MutationType))
 }
