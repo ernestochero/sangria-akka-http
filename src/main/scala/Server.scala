@@ -15,7 +15,7 @@ import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import io.circe._
 import io.circe.optics.JsonPath._
 import io.circe.parser._
-
+import com.typesafe.config.{Config, ConfigFactory}
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success}
 import GraphQLRequestUnmarshaller._
@@ -30,6 +30,9 @@ object Server extends App with CorsSupport {
   import system.dispatcher
 
   val repository = new ProductRepository(Mongo.productsCollection)
+  val config = ConfigFactory.load()
+  val host = config.getString("http.host") // Gets the host and a port from the configuration
+  val port = config.getInt("http.port")
 
   def executeGraphQL(query: Document, operationName: Option[String], variables: Json, tracing: Boolean) = {
     complete(Executor.execute(SchemaDefinition3.ProductSchema, query, new ProductRepo(repository),
@@ -113,5 +116,5 @@ object Server extends App with CorsSupport {
       redirect("/graphql", PermanentRedirect)
     }
 
-  Http().bindAndHandle(corsHandler(route), "0.0.0.0", sys.props.get("http.port").fold(8090)(_.toInt))
+  Http().bindAndHandle(corsHandler(route), host, port)
 }
